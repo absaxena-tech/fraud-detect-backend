@@ -1,7 +1,7 @@
-package com.fingaurd.controller;
+package com.finguard.controller;
 
-import com.fingaurd.entity.FraudAlert;
-import com.fingaurd.service.FraudDetectionService;
+import com.finguard.entity.FraudAlert;
+import com.finguard.service.FraudDetectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

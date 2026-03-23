@@ -1,6 +1,6 @@
-package com.fingaurd.repository;
+package com.finguard.repository;
 
-import com.fingaurd.entity.FraudAlert;
+import com.finguard.entity.FraudAlert;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
