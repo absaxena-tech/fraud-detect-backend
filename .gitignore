@@ -1,11 +1,12 @@
-# Maven
+# Maven / Build
 target/
 *.jar
 *.war
 *.class
 
-# Environment
+# Environment files
 .env
+.env.*
 .env.example
 
 # IDE
