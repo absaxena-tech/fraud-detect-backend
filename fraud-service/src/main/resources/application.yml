@@ -4,20 +4,24 @@ server:
 spring:
   application:
     name: fraud-service
+
   datasource:
-    url: jdbc:postgresql://localhost:5432/fingaurd
-    username: fingaurd
-    password: fingaurd123
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
   jpa:
     hibernate:
       ddl-auto: validate
     show-sql: false
+
   data:
     redis:
-      host: redis
-      port: 6379
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
     consumer:
       group-id: fraud-service
       auto-offset-reset: earliest
@@ -37,9 +41,9 @@ kafka:
 
 services:
   risk:
-    url: http://localhost:8083
+    url: ${RISK_SERVICE_URL}
   rag:
-    url: http://localhost:8084
+    url: ${RAG_SERVICE_URL}
 
 fraud:
   thresholds:
