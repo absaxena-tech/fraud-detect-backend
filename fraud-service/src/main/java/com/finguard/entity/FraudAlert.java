@@ -1,4 +1,4 @@
-package com.fingaurd.entity;
+package com.finguard.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
