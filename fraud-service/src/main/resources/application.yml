@@ -1,0 +1,50 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: fraud-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/fingaurd
+    username: fingaurd
+    password: fingaurd123
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+  data:
+    redis:
+      host: redis
+      port: 6379
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: fraud-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.fingaurd.dto"
+        spring.json.value.default.type: com.fingaurd.dto.TransactionEvent
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+kafka:
+  topics:
+    transactions: transactions
+    fraud-alerts: fraud-alerts
+
+services:
+  risk:
+    url: http://localhost:8083
+  rag:
+    url: http://localhost:8084
+
+fraud:
+  thresholds:
+    high-amount: 10000.00
+    velocity-window-seconds: 3600
+    velocity-max-count: 10
+    score-flag: 0.7
+    score-block: 0.9
