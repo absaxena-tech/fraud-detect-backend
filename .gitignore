@@ -1,0 +1,23 @@
+# Maven
+target/
+*.jar
+*.war
+*.class
+
+# Environment
+.env
+.env.example
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker volumes (local)
+pgdata/
+chromadata/
