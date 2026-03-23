@@ -1,4 +1,4 @@
-package com.fingaurd;
+package com.finguard;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
