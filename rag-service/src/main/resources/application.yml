@@ -1,0 +1,22 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: rag-service
+
+chroma:
+  host: chromadb
+  port: 8000
+  collection: fraud-cases
+
+openai:
+  api-key: ${OPENAI_API_KEY}
+  model: gpt-3.5-turbo
+  embedding-model: text-embedding-ada-002
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
