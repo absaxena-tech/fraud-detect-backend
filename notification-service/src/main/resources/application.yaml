@@ -1,3 +1,47 @@
+server:
+  port: 8085
+
 spring:
   application:
     name: notification-service
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: notification-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.fingaurd.dto"
+        spring.json.value.default.type: com.fingaurd.dto.FraudAlertEvent
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME:your_email@example.com}
+    password: ${MAIL_PASSWORD:your_app_password}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 5000
+
+kafka:
+  topics:
+    fraud-alerts: fraud-alerts
+
+notification:
+  alert-email: ${ALERT_EMAIL:alerts@example.com}
+  enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+logging:
+  level:
+    org.springframework.mail: INFO
+    jakarta.mail: INFO
