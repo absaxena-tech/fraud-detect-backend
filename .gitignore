@@ -12,8 +12,7 @@ target/
 # IDE
 .idea/
 *.iml
-.vscode/
-*.swp
+.vscode/*.swp
 
 # OS
 .DS_Store
