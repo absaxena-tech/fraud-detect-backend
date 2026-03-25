@@ -14,7 +14,7 @@
     </parent>
 
     <!-- Project Info -->
-    <groupId>com.fingaurd</groupId>
+    <groupId>com.finguard</groupId>
     <artifactId>risk-service</artifactId>
     <version>1.0.0</version>
     <name>risk-service</name>
