@@ -13,8 +13,8 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
-        spring.json.trusted.packages: "com.fingaurd.dto"
-        spring.json.value.default.type: com.fingaurd.dto.FraudAlertEvent
+        spring.json.trusted.packages: "com.finguard.dto"
+        spring.json.value.default.type: com.finguard.dto.FraudAlertEvent
 
   mail:
     host: smtp.gmail.com
