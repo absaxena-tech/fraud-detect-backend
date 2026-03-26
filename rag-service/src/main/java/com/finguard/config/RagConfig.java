@@ -25,23 +25,16 @@ public class RagConfig {
     @Value("${chroma.collection}")
     private String collection;
 
-    // Embedding Model (OpenRouter)
     @Bean
     public EmbeddingModel embeddingModel() {
         return OpenAiEmbeddingModel.builder()
                 .apiKey(openAiKey)
-<<<<<<< Updated upstream
-                .baseUrl("https://openrouter.ai/api/v1")   // 🔥 IMPORTANT
-                .modelName("text-embedding-3-small")       // ✅ supported
-=======
-                .baseUrl("https://openrouter.ai/api/v1")   // IMPORTANT
-                .modelName("text-embedding-3-small")       // supported
->>>>>>> Stashed changes
+                .baseUrl("https://openrouter.ai/api/v1")
+                .modelName("text-embedding-3-small")
                 .timeout(Duration.ofSeconds(30))
                 .build();
     }
 
-    // Chroma DB
     @Bean
     public ChromaEmbeddingStore chromaEmbeddingStore() {
         return ChromaEmbeddingStore.builder()
@@ -50,18 +43,12 @@ public class RagConfig {
                 .build();
     }
 
-    // Chat Model (OpenRouter)
     @Bean
     public OpenAiChatModel chatModel() {
         return OpenAiChatModel.builder()
                 .apiKey(openAiKey)
-<<<<<<< Updated upstream
-                .baseUrl("https://openrouter.ai/api/v1")   // 🔥 IMPORTANT
-                .modelName("openai/gpt-3.5-turbo")         // ✅ OpenRouter format
-=======
-                .baseUrl("https://openrouter.ai/api/v1")   // IMPORTANT
-                .modelName("openai/gpt-3.5-turbo")         // OpenRouter format
->>>>>>> Stashed changes
+                .baseUrl("https://openrouter.ai/api/v1")
+                .modelName("openai/gpt-3.5-turbo")
                 .temperature(0.2)
                 .timeout(Duration.ofSeconds(60))
                 .build();
