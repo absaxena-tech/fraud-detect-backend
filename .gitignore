@@ -22,4 +22,4 @@ Thumbs.db
 
 # Docker volumes (local)
 pgdata/
-chromadata/
+chromadata/.idea/
