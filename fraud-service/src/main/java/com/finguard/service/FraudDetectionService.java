@@ -56,17 +56,17 @@ public class FraudDetectionService {
             return;
         }
 
-        // Step 2: Risk enrichment (timeout safe)
+        // Step 2: Risk enrichment
         RiskResponse risk = fetchRiskScore(tx.getAccountId());
         double finalScore = calculateFinalScore(baseScore, risk);
 
         // Step 3: Decide status
         String status = decideStatus(finalScore);
 
-        // Step 4: Create default explanation (fast)
+        // Step 4: Default explanation
         String explanation = "Fraud detected based on rules: " + ruleResult.allRules();
 
-        // Step 5: Save alert immediately (don’t wait for RAG)
+        // Step 5: Save alert
         FraudAlert alert = FraudAlert.builder()
                 .transactionId(tx.getId())
                 .fraudScore(finalScore)
@@ -74,9 +74,10 @@ public class FraudDetectionService {
                 .explanation(explanation)
                 .status(status)
                 .build();
-        alertRepository.save(alert);
 
-        // Step 6: Publish Kafka event immediately
+        alert = alertRepository.save(alert);
+
+        // Step 6: Publish Kafka event
         FraudAlertEvent event = FraudAlertEvent.builder()
                 .transactionId(tx.getId())
                 .accountId(tx.getAccountId())
@@ -92,7 +93,7 @@ public class FraudDetectionService {
 
         log.info("Fraud alert published for tx {} status={} score={}", tx.getId(), status, finalScore);
 
-        // Step 7: Fetch RAG explanation asynchronously (no blocking)
+        // Step 7: Async RAG explanation
         fetchRagExplanationAsync(tx, alert.getId());
     }
 
@@ -170,11 +171,8 @@ public class FraudDetectionService {
     public List<FraudAlert> getAlertsByTransaction(UUID transactionId) {
         return alertRepository.findByTransactionId(transactionId);
     }
-<<<<<<< Updated upstream
     public List<FraudAlert> getAlertsByUserId(String userId) {
         return alertRepository.findByUserId(userId);
     }
 }
-=======
-}
->>>>>>> Stashed changes
+
