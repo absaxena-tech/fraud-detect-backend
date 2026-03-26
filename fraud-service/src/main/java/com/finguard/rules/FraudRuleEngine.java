@@ -32,7 +32,7 @@ public class FraudRuleEngine {
 
     public FraudRuleEngine(StringRedisTemplate redis) {
         this.redis = redis;
-    }
+    } //if particular account does transaction more than 5 times in one minute
 
     public RuleResult evaluate(TransactionEvent tx) {
         List<String> triggeredRules = new ArrayList<>();
