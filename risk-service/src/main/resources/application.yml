@@ -1,5 +1,5 @@
 server:
-  port: 8083
+  port: ${RISK_SERVICE_PORT}
 
 spring:
   application:
@@ -12,7 +12,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     show-sql: false
 
   data:

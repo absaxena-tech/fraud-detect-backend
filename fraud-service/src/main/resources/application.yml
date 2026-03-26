@@ -1,5 +1,5 @@
 server:
-  port: 8082
+  port: ${FRAUD_SERVICE_PORT}
 
 spring:
   application:
@@ -47,10 +47,8 @@ services:
 
 fraud:
   thresholds:
-    high-amount: 10000.00
-    velocity-window-seconds: 3600
-    velocity-max-count: 10
-    score-flag: 0.7
-    score-block: 0.9
-
-
+    high-amount: ${FRAUD_HIGH_AMOUNT:10000.0}
+    velocity-window-seconds: ${FRAUD_VELOCITY_WINDOW:3600}
+    velocity-max-count: ${FRAUD_VELOCITY_MAX:10}
+    score-flag: ${FRAUD_SCORE_FLAG:0.7}
+    score-block: ${FRAUD_SCORE_BLOCK:0.9}

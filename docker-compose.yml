@@ -1,19 +1,17 @@
-version: '3.8'
-
 services:
   # ── Infrastructure ──────────────────────────────────────────────
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
+    ports:
+      - "${ZOOKEEPER_PORT}:2181"
     environment:
       ZOOKEEPER_CLIENT_PORT: ${ZOOKEEPER_PORT}
-    ports:
-      - "${ZOOKEEPER_PORT}:${ZOOKEEPER_PORT}"
 
   kafka:
     image: confluentinc/cp-kafka:7.5.0
     depends_on: [zookeeper]
     ports:
-      - "${KAFKA_PORT}:${KAFKA_PORT}"
+      - "${KAFKA_PORT}:9092"
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:${ZOOKEEPER_PORT}
@@ -30,16 +28,16 @@ services:
       - "${KAFKA_UI_PORT}:8080"
     environment:
       KAFKA_CLUSTERS_0_NAME: ${KAFKA_CLUSTER_NAME}
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
 
   postgres:
     image: postgres:15-alpine
+    ports:
+      - "${POSTGRES_PORT}:5432"
     environment:
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
-    ports:
-      - "${POSTGRES_PORT}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -47,62 +45,94 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "${REDIS_PORT}:${REDIS_PORT}"
+      - "${REDIS_PORT}:6379"
 
   chromadb:
     image: chromadb/chroma:0.4.24
     ports:
-      - "${CHROMA_PORT}:${CHROMA_PORT}"
+      - "${CHROMA_PORT}:8000"
     volumes:
       - chromadata:/chroma/chroma
 
-  # ── Microservices ────────────────────────────────────────────────
-  transaction-service:
-    build: ./transaction-service
+  # ── Auth Service ────────────────────────────────────────────────
+  auth-service:
+    build: ./auth-service
     ports:
-      - "${TRANSACTION_SERVICE_PORT}:${TRANSACTION_SERVICE_PORT}"
-    depends_on: [kafka, postgres]
-    env_file:
-      - .env
-    environment:
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME}
-      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
-
-  fraud-service:
-    build: ./fraud-service
-    ports:
-      - "${FRAUD_SERVICE_PORT}:${FRAUD_SERVICE_PORT}"
-    depends_on: [kafka, postgres, redis]
-    env_file:
-      - .env
-    environment:
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME}
-      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
-      SPRING_REDIS_HOST: redis
-      RISK_SERVICE_URL: http://risk-service:${RISK_SERVICE_PORT}
-      RAG_SERVICE_URL: http://rag-service:${RAG_SERVICE_PORT}
-
-  risk-service:
-    build: ./risk-service
-    ports:
-      - "${RISK_SERVICE_PORT}:${RISK_SERVICE_PORT}"
+      - "${AUTH_SERVICE_PORT}:8086"
     depends_on: [postgres, redis]
     env_file:
       - .env
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME}
+      SPRING_DATASOURCE_URL: ${DB_URL}
       SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
-      SPRING_REDIS_HOST: redis
+      SPRING_DATA_REDIS_HOST: ${REDIS_HOST}
+      SPRING_DATA_REDIS_PORT: ${REDIS_PORT}
+      JWT_SECRET: ${JWT_SECRET}
 
+  # ── API Gateway ────────────────────────────────────────────────
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "8080:8080"
+    depends_on: [auth-service]
+    env_file:
+      - .env
+    environment:
+      JWT_SECRET: ${JWT_SECRET}
+
+  # ── Transaction Service ─────────────────────────────────────────
+  transaction-service:
+    build: ./transaction-service
+    ports:
+      - "${TRANSACTION_SERVICE_PORT}:8081"
+    depends_on: [kafka, postgres]
+    env_file:
+      - .env
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
+      SPRING_DATASOURCE_URL: ${DB_URL}
+      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+
+  # ── Fraud Service ───────────────────────────────────────────────
+  fraud-service:
+    build: ./fraud-service
+    ports:
+      - "${FRAUD_SERVICE_PORT}:8082"
+    depends_on: [kafka, postgres, redis]
+    env_file:
+      - .env
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
+      SPRING_DATASOURCE_URL: ${DB_URL}
+      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      SPRING_DATA_REDIS_HOST: ${REDIS_HOST}
+      SPRING_DATA_REDIS_PORT: ${REDIS_PORT}
+      RISK_SERVICE_URL: ${RISK_SERVICE_URL}
+      RAG_SERVICE_URL: ${RAG_SERVICE_URL}
+
+  # ── Risk Service ────────────────────────────────────────────────
+  risk-service:
+    build: ./risk-service
+    ports:
+      - "${RISK_SERVICE_PORT}:8083"
+    depends_on: [postgres, redis]
+    env_file:
+      - .env
+    environment:
+      SPRING_DATASOURCE_URL: ${DB_URL}
+      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      SPRING_DATA_REDIS_HOST: ${REDIS_HOST}
+      SPRING_DATA_REDIS_PORT: ${REDIS_PORT}
+
+  # ── RAG Service ─────────────────────────────────────────────────
   rag-service:
     build: ./rag-service
     ports:
-      - "${RAG_SERVICE_PORT}:${RAG_SERVICE_PORT}"
+      - "${RAG_SERVICE_PORT}:8084"
     depends_on: [chromadb]
     env_file:
       - .env
@@ -111,15 +141,16 @@ services:
       CHROMA_PORT: ${CHROMA_PORT}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
 
+  # ── Notification Service ────────────────────────────────────────
   notification-service:
     build: ./notification-service
     ports:
-      - "${NOTIFICATION_SERVICE_PORT}:${NOTIFICATION_SERVICE_PORT}"
+      - "${NOTIFICATION_SERVICE_PORT}:8085"
     depends_on: [kafka]
     env_file:
       - .env
     environment:
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
       MAIL_USERNAME: ${MAIL_USERNAME}
       MAIL_PASSWORD: ${MAIL_PASSWORD}
       ALERT_EMAIL: ${ALERT_EMAIL}

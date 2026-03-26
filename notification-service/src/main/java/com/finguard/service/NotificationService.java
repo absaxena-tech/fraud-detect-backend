@@ -46,7 +46,7 @@ public class NotificationService {
     private void logAlert(FraudAlertEvent e) {
         log.warn("""
                 ╔══════════════════════════════════════════════════
-                ║  FINGAURD FRAUD ALERT
+                ║  FINGUARD FRAUD ALERT
                 ║  Status      : {}
                 ║  Transaction : {}
                 ║  Account     : {}

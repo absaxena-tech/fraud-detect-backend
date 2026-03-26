@@ -1,12 +1,12 @@
 server:
-  port: 8085
+  port: ${NOTIFICATION_SERVICE_PORT}
 
 spring:
   application:
     name: notification-service
 
   kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
     consumer:
       group-id: notification-service
       auto-offset-reset: earliest
@@ -19,8 +19,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: ${MAIL_USERNAME:your_email@example.com}
-    password: ${MAIL_PASSWORD:your_app_password}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
     properties:
       mail.smtp.auth: true
       mail.smtp.starttls.enable: true
@@ -32,7 +32,7 @@ kafka:
     fraud-alerts: fraud-alerts
 
 notification:
-  alert-email: ${ALERT_EMAIL:alerts@example.com}
+  alert-email: ${ALERT_EMAIL}
   enabled: true
 
 management:
@@ -43,5 +43,5 @@ management:
 
 logging:
   level:
-    org.springframework.mail: INFO
-    jakarta.mail: INFO
+    org.springframework.mail: DEBUG
+    jakarta.mail: DEBUG
