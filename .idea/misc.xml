@@ -4,12 +4,20 @@
   <component name="MavenProjectsManager">
     <option name="originalFiles">
       <list>
+<<<<<<< Updated upstream
         <option value="$PROJECT_DIR$/transaction-service/pom.xml" />
         <option value="$PROJECT_DIR$/risk-service/pom.xml" />
         <option value="$PROJECT_DIR$/rag-service/pom.xml" />
         <option value="$PROJECT_DIR$/notification-service/pom.xml" />
         <option value="$PROJECT_DIR$/fraud-service/pom.xml" />
         <option value="$PROJECT_DIR$/auth-service/pom.xml" />
+=======
+        <option value="$PROJECT_DIR$/notification-service/pom.xml" />
+        <option value="$PROJECT_DIR$/transaction-service/pom.xml" />
+        <option value="$PROJECT_DIR$/risk-service/pom.xml" />
+        <option value="$PROJECT_DIR$/rag-service/pom.xml" />
+        <option value="$PROJECT_DIR$/fraud-service/pom.xml" />
+>>>>>>> Stashed changes
       </list>
     </option>
   </component>
