@@ -7,10 +7,7 @@ import java.time.Instant;
 
 @Entity
 @Table(name = "risk_profiles")
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
+@Data @Builder @NoArgsConstructor @AllArgsConstructor
 public class RiskProfile {
 
     @Id

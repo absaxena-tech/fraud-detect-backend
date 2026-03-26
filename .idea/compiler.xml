@@ -9,17 +9,17 @@
         <outputRelativeToContentRoot value="true" />
         <module name="fraud-service" />
         <module name="transaction-service" />
+        <module name="rag-service" />
         <module name="notification-service" />
+        <module name="risk-service" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="risk-service" target="17" />
-    </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="fraud-service" options="-parameters" />
       <module name="notification-service" options="-parameters" />
+      <module name="rag-service" options="-parameters" />
       <module name="risk-service" options="-parameters" />
       <module name="transaction-service" options="-parameters" />
     </option>

@@ -128,4 +128,7 @@ public class FraudDetectionService {
     public List<FraudAlert> getAlertsByTransaction(UUID transactionId) {
         return alertRepository.findByTransactionId(transactionId);
     }
+    public List<FraudAlert> getAlertsByUserId(String userId) {
+        return alertRepository.findByUserId(userId);
+    }
 }

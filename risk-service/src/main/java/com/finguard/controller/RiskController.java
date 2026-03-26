@@ -15,13 +15,19 @@ public class RiskController {
 
     private final RiskService riskService;
 
-    /** Called synchronously by Fraud Service */
+    /** Get the authenticated user's own risk profile */
+    @GetMapping("/me")
+    public ResponseEntity<RiskResponse> getMyRisk(
+            @RequestHeader("X-User-Id") String userId) {
+        return ResponseEntity.ok(riskService.getRisk(userId));
+    }
+
+    /** Internal service-to-service call from fraud-service */
     @GetMapping("/{accountId}")
     public ResponseEntity<RiskResponse> getRisk(@PathVariable String accountId) {
         return ResponseEntity.ok(riskService.getRisk(accountId));
     }
 
-    /** Update profile after a legitimate transaction */
     @PostMapping("/{accountId}/update")
     public ResponseEntity<Void> updateProfile(
             @PathVariable String accountId,
