@@ -12,6 +12,7 @@ import java.util.UUID;
 public interface FraudAlertRepository extends JpaRepository<FraudAlert, UUID> {
     List<FraudAlert> findByTransactionId(UUID transactionId);
     List<FraudAlert> findByStatusOrderByCreatedAtDesc(String status);
+    boolean existsByTransactionId(UUID transactionId);
 
     @Query(value = """
         SELECT fa.* FROM fraud_alerts fa
