@@ -32,8 +32,8 @@ kafka:
     fraud-alerts: fraud-alerts
 
 notification:
-  alert-email: ${ALERT_EMAIL}
   enabled: true
+  fallback-email: ${FALLBACK_EMAIL:security@fingaurd.com}
 
 management:
   endpoints:

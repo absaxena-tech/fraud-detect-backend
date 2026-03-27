@@ -112,6 +112,7 @@ services:
       SPRING_DATA_REDIS_PORT: ${REDIS_PORT}
       RISK_SERVICE_URL: ${RISK_SERVICE_URL}
       RAG_SERVICE_URL: ${RAG_SERVICE_URL}
+      TRANSACTION_SERVICE_URL: ${TRANSACTION_SERVICE_URL}
 
   # ── Risk Service ────────────────────────────────────────────────
   risk-service:
@@ -153,7 +154,7 @@ services:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
       MAIL_USERNAME: ${MAIL_USERNAME}
       MAIL_PASSWORD: ${MAIL_PASSWORD}
-      ALERT_EMAIL: ${ALERT_EMAIL}
+      FALLBACK_EMAIL: ${FALLBACK_EMAIL}
 
 volumes:
   pgdata:

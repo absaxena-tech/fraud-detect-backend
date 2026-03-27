@@ -18,9 +18,9 @@ public class TransactionConsumer {
     private final FraudDetectionService fraudDetectionService;
 
     @KafkaListener(
-        topics = "${kafka.topics.transactions}",
-        groupId = "${spring.kafka.consumer.group-id}",
-        concurrency = "3"
+            topics = "${kafka.topics.transactions}",
+            groupId = "${spring.kafka.consumer.group-id}",
+            concurrency = "3"
     )
     public void consume(
             @Payload TransactionEvent event,
