@@ -29,8 +29,13 @@ public class RagConfig {
     public EmbeddingModel embeddingModel() {
         return OpenAiEmbeddingModel.builder()
                 .apiKey(openAiKey)
+<<<<<<< Updated upstream
                 .baseUrl("https://openrouter.ai/api/v1")   // 🔥 IMPORTANT
                 .modelName("text-embedding-3-small")       // ✅ supported
+=======
+                .baseUrl("https://openrouter.ai/api/v1")
+                .modelName("text-embedding-3-small")
+>>>>>>> Stashed changes
                 .timeout(Duration.ofSeconds(30))
                 .build();
     }
@@ -47,8 +52,13 @@ public class RagConfig {
     public OpenAiChatModel chatModel() {
         return OpenAiChatModel.builder()
                 .apiKey(openAiKey)
+<<<<<<< Updated upstream
                 .baseUrl("https://openrouter.ai/api/v1")   // 🔥 IMPORTANT
                 .modelName("openai/gpt-3.5-turbo")         // ✅ OpenRouter format
+=======
+                .baseUrl("https://openrouter.ai/api/v1")
+                .modelName("openai/gpt-3.5-turbo")
+>>>>>>> Stashed changes
                 .temperature(0.2)
                 .timeout(Duration.ofSeconds(60))
                 .build();
