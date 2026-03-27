@@ -10,15 +10,22 @@ import java.util.UUID;
 
 @Repository
 public interface FraudAlertRepository extends JpaRepository<FraudAlert, UUID> {
+
     List<FraudAlert> findByTransactionId(UUID transactionId);
+
     List<FraudAlert> findByStatusOrderByCreatedAtDesc(String status);
+
+    List<FraudAlert> findByStatusInOrderByCreatedAtDesc(List<String> statuses);
+
     boolean existsByTransactionId(UUID transactionId);
 
     @Query(value = """
-        SELECT fa.* FROM fraud_alerts fa
-        JOIN transactions t ON fa.transaction_id = t.id
-        WHERE t.account_id = :userId
-        ORDER BY fa.created_at DESC
-        """, nativeQuery = true)
-    List<FraudAlert> findByUserId(String userId);
+    SELECT fa.* FROM fraud_alerts fa
+    JOIN transactions t ON fa.transaction_id = t.id
+    WHERE t.account_id = :userId
+    ORDER BY fa.created_at DESC
+    """, nativeQuery = true)
+    List<FraudAlert> findByUserId(
+            @org.springframework.data.repository.query.Param("userId") String userId
+    );
 }
