@@ -38,7 +38,6 @@ public class FraudDetectionService {
     @Value("${fraud.thresholds.score-block}")
     private double scoreBlockThreshold;
 
-<<<<<<< Updated upstream
     public FraudDetectionService(
             FraudRuleEngine ruleEngine,
             FraudAlertRepository alertRepository,
@@ -54,31 +53,21 @@ public class FraudDetectionService {
         this.transactionWebClient = transactionWebClient;
     }
 
-    public void analyze(TransactionEvent tx) {
-        log.info("Analyzing transaction {} for account {}", tx.getId(), tx.getAccountId());
-
-        // ── Step 1: Rule engine ──────────────────────────────────
-        FraudRuleEngine.RuleResult ruleResult = ruleEngine.evaluate(tx);
-        double baseScore = ruleResult.score();
-        log.info("Rule score tx={}: {} rules={}", tx.getId(), baseScore, ruleResult.allRules());
-
-        // ── Step 2: Always update risk profile ───────────────────
-        // This runs regardless of fraud outcome so the profile reflects every transaction.
-        updateRiskProfile(tx);
-=======
     /**
      * Main entry point to analyze a transaction
      */
     public void analyze(TransactionEvent tx) {
-        log.info("Analyzing transaction {}", tx.getId());
+        log.info("Analyzing transaction {} for account {}", tx.getId(), tx.getAccountId());
 
-        // Step 1: Evaluate rules
+        // Step 1: Rule engine
         FraudRuleEngine.RuleResult ruleResult = ruleEngine.evaluate(tx);
         double baseScore = ruleResult.score();
-        log.info("Rule score for tx {}: {} rules={}", tx.getId(), baseScore, ruleResult.allRules());
->>>>>>> Stashed changes
+        log.info("Rule score tx={}: {} rules={}", tx.getId(), baseScore, ruleResult.allRules());
 
-        // ── Step 3: If below flag threshold → mark SUCCESS and exit
+        // Step 2: Always update risk profile
+        updateRiskProfile(tx);
+
+        // Step 3: If below flag threshold → mark SUCCESS and exit
         if (baseScore < scoreFlagThreshold) {
             log.info("Transaction {} is clean (score={} < {}), marking SUCCESS",
                     tx.getId(), baseScore, scoreFlagThreshold);
@@ -86,8 +75,7 @@ public class FraudDetectionService {
             return;
         }
 
-<<<<<<< Updated upstream
-        // ── Step 4: Enrich with risk service score ───────────────
+        // Step 4: Enrich with risk service score
         double enrichedScore = baseScore;
         try {
             RiskResponse risk = riskWebClient.get()
@@ -104,17 +92,10 @@ public class FraudDetectionService {
             log.warn("Risk service unavailable for tx {}, using base score: {}", tx.getId(), e.getMessage());
         }
 
-        // ── Step 5: RAG explanation ───────────────────────────────
-=======
-        // Step 2: Enrich with Risk score (timeout-safe)
-        RiskResponse risk = fetchRiskScore(tx.getAccountId());
-        double finalScore = calculateFinalScore(baseScore, risk);
+        // Step 5: Determine status
+        String status = enrichedScore >= scoreBlockThreshold ? "BLOCKED" : "FLAGGED";
 
-        // Step 3: Decide alert status
-        String status = decideStatus(finalScore);
-
-        // Step 4: Create default explanation
->>>>>>> Stashed changes
+        // Step 6: Create explanation
         String explanation = "Fraud detected based on rules: " + ruleResult.allRules();
         try {
             RagExplanationResponse rag = ragWebClient.post()
@@ -130,80 +111,43 @@ public class FraudDetectionService {
             log.warn("RAG service unavailable for tx {}, using default explanation: {}", tx.getId(), e.getMessage());
         }
 
-<<<<<<< Updated upstream
-        // ── Step 6: Determine status ──────────────────────────────
-        String status = enrichedScore >= scoreBlockThreshold ? "BLOCKED" : "FLAGGED";
-
-        // ── Step 7: Persist fraud alert ───────────────────────────
-        FraudAlert alert = FraudAlert.builder()
-                .transactionId(tx.getId())
-                .fraudScore(enrichedScore)
-                .ruleTriggered(ruleResult.primaryRule())
-                .explanation(explanation)
-                .status(status)
-                .build();
-        alertRepository.save(alert);
-
-        // ── Step 8: Update transaction status ────────────────────
-        updateTransactionStatus(tx.getId(), status);
-
-        // ── Step 9: Publish fraud alert to Kafka ─────────────────
-        // userEmail is forwarded from the original TransactionEvent so
-        // notification-service can send the alert directly to the user.
-        FraudAlertEvent event = FraudAlertEvent.builder()
-                .transactionId(tx.getId())
-                .accountId(tx.getAccountId())
-                .userEmail(tx.getUserEmail())        // FIX 3: user's own email
-                .amount(tx.getAmount())
-                .fraudScore(enrichedScore)
-                .ruleTriggered(ruleResult.primaryRule())
-                .explanation(explanation)
-                .status(status)
-                .detectedAt(Instant.now())
-                .build();
-
-        kafkaTemplate.send(fraudAlertsTopic, tx.getAccountId(), event);
-        log.warn("Fraud alert published tx={} status={} score={}", tx.getId(), status, enrichedScore);
-=======
-        // Step 5: Check for duplicate alerts (idempotency)
+        // Step 7: Check for duplicate alerts (idempotency)
         if (alertRepository.existsByTransactionId(tx.getId())) {
             log.warn("Alert already exists for transaction {}. Skipping save.", tx.getId());
         } else {
-            // Step 6: Save alert immediately
+            // Step 8: Persist fraud alert
             FraudAlert alert = FraudAlert.builder()
                     .transactionId(tx.getId())
-                    .fraudScore(finalScore)
+                    .fraudScore(enrichedScore)
                     .ruleTriggered(ruleResult.primaryRule())
                     .explanation(explanation)
                     .status(status)
                     .build();
             alertRepository.save(alert);
 
-            // Step 7: Publish Kafka event
+            // Step 9: Update transaction status
+            updateTransactionStatus(tx.getId(), status);
+
+            // Step 10: Publish fraud alert to Kafka
             FraudAlertEvent event = FraudAlertEvent.builder()
                     .transactionId(tx.getId())
                     .accountId(tx.getAccountId())
+                    .userEmail(tx.getUserEmail())
                     .amount(tx.getAmount())
-                    .fraudScore(finalScore)
+                    .fraudScore(enrichedScore)
                     .ruleTriggered(ruleResult.primaryRule())
                     .explanation(explanation)
                     .status(status)
                     .detectedAt(Instant.now())
                     .build();
-            kafkaTemplate.send(fraudAlertsTopic, tx.getAccountId(), event);
-            log.info("Fraud alert published for tx {} status={} score={}", tx.getId(), status, finalScore);
 
-            // Step 8: Fetch RAG explanation asynchronously
-            fetchRagExplanationAsync(tx, alert.getId());
+            kafkaTemplate.send(fraudAlertsTopic, tx.getAccountId(), event);
+            log.warn("Fraud alert published tx={} status={} score={}", tx.getId(), status, enrichedScore);
         }
->>>>>>> Stashed changes
     }
 
-    // ── Private helpers ───────────────────────────────────────────
-
     /**
-     * FIX 1: Always call risk-service to update the account's profile.
-     * This ensures avg_amount and transaction_count are never stuck at 0.
+     * Always call risk-service to update the account's profile
      */
     private void updateRiskProfile(TransactionEvent tx) {
         try {
@@ -221,10 +165,8 @@ public class FraudDetectionService {
         }
     }
 
-<<<<<<< Updated upstream
     /**
-     * FIX 2: Call transaction-service to update the transaction status.
-     * Status values: SUCCESS (clean), FLAGGED (score >= 0.7), BLOCKED (score >= 0.9)
+     * Call transaction-service to update the transaction status
      */
     private void updateTransactionStatus(UUID transactionId, String status) {
         try {
@@ -237,51 +179,12 @@ public class FraudDetectionService {
                     .bodyToMono(Void.class)
                     .block();
             log.info("Transaction {} status set to {}", transactionId, status);
-=======
-    private double calculateFinalScore(double baseScore, RiskResponse risk) {
-        if (risk == null) return baseScore;
-        double enrichedScore = Math.min(1.0, baseScore * 0.6 + risk.getRiskScore() * 0.4);
-        log.info("Risk enrichment applied: baseScore={} riskScore={} finalScore={}", baseScore, risk.getRiskScore(), enrichedScore);
-        return enrichedScore;
-    }
-
-    private String decideStatus(double score) {
-        return score >= scoreBlockThreshold ? "BLOCKED" : "FLAGGED";
-    }
-
-    private void fetchRagExplanationAsync(TransactionEvent tx, UUID alertId) {
-        ragWebClient.post()
-                .uri("/api/rag/explain")
-                .bodyValue(tx)
-                .retrieve()
-                .bodyToMono(RagExplanationResponse.class)
-                .timeout(Duration.ofSeconds(3))
-                .onErrorResume(ex -> {
-                    log.warn("RAG service failed for tx {}: {}", tx.getId(), ex.getMessage());
-                    return Mono.empty();
-                })
-                .subscribe(ragResp -> {
-                    if (ragResp != null && ragResp.getExplanation() != null) {
-                        updateAlertExplanation(alertId, ragResp.getExplanation());
-                    }
-                });
-    }
-
-    private void updateAlertExplanation(UUID alertId, String explanation) {
-        try {
-            alertRepository.findById(alertId).ifPresent(alert -> {
-                alert.setExplanation(explanation);
-                alertRepository.save(alert);
-                log.info("Updated explanation for alert {}", alertId);
-            });
->>>>>>> Stashed changes
         } catch (Exception e) {
             log.warn("Could not update status for transaction {}: {}", transactionId, e.getMessage());
         }
     }
 
-    // ── Query methods ─────────────────────────────────────────────
-
+    // Query methods
     public List<FraudAlert> getOpenAlerts() {
         return alertRepository.findByStatusOrderByCreatedAtDesc("FLAGGED");
     }
@@ -293,8 +196,4 @@ public class FraudDetectionService {
     public List<FraudAlert> getAlertsByUserId(String userId) {
         return alertRepository.findByUserId(userId);
     }
-<<<<<<< Updated upstream
 }
-=======
-}
->>>>>>> Stashed changes
