@@ -44,6 +44,8 @@ services:
     url: ${RISK_SERVICE_URL}
   rag:
     url: ${RAG_SERVICE_URL}
+  transaction:
+    url: ${TRANSACTION_SERVICE_URL:http://localhost:8081}
 
 fraud:
   thresholds:

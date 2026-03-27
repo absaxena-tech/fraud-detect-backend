@@ -19,14 +19,16 @@ public class TransactionController {
     private final TransactionService service;
 
     /**
-     * X-User-Id injected by API Gateway after JWT validation.
-     * Client sends amount, currency, merchant etc — never accountId.
+     * X-User-Id and X-User-Email are injected by the API Gateway after JWT validation.
+     * The client sends: amount, currency, merchant etc — never accountId or userEmail.
      */
     @PostMapping
     public ResponseEntity<Transaction> submit(
             @RequestBody TransactionEvent event,
-            @RequestHeader("X-User-Id") String userId) {
+            @RequestHeader("X-User-Id")    String userId,
+            @RequestHeader("X-User-Email") String userEmail) {
         event.setAccountId(userId);
+        event.setUserEmail(userEmail);
         return ResponseEntity.status(HttpStatus.CREATED).body(service.submit(event));
     }
 
@@ -45,5 +47,17 @@ public class TransactionController {
     public ResponseEntity<List<Transaction>> getMyTransactions(
             @RequestHeader("X-User-Id") String userId) {
         return ResponseEntity.ok(service.getByAccount(userId));
+    }
+
+    /**
+     * Internal endpoint called by fraud-service to update transaction status.
+     * Not exposed through the gateway — called service-to-service directly.
+     */
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<Void> updateStatus(
+            @PathVariable UUID id,
+            @RequestParam String status) {
+        service.updateStatus(id, status);
+        return ResponseEntity.ok().build();
     }
 }

@@ -11,7 +11,8 @@ import java.util.UUID;
 @AllArgsConstructor
 public class TransactionEvent {
     private UUID id;
-    private String accountId;
+    private String accountId;   // userId — set server-side from X-User-Id header
+    private String userEmail;   // set server-side from X-User-Email header (injected by gateway)
     private BigDecimal amount;
     private String currency;
     private String merchant;

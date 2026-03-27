@@ -23,4 +23,12 @@ public class WebClientConfig {
                 .defaultHeader("Content-Type", "application/json")
                 .build();
     }
+
+    @Bean("transactionWebClient")
+    public WebClient transactionWebClient(@Value("${services.transaction.url}") String txUrl) {
+        return WebClient.builder()
+                .baseUrl(txUrl)
+                .defaultHeader("Content-Type", "application/json")
+                .build();
+    }
 }

@@ -29,7 +29,6 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // ✅ KEEP THIS (uses PasswordEncoder from PasswordConfig)
     @Bean
     public DaoAuthenticationProvider authProvider(org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
         var p = new DaoAuthenticationProvider();

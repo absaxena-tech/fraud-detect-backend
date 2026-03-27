@@ -48,6 +48,19 @@ public class TransactionService {
         return tx;
     }
 
+    /**
+     * Called by fraud-service after analysis is complete.
+     * Status will be: FLAGGED, BLOCKED, or SUCCESS
+     */
+    @Transactional
+    public void updateStatus(UUID id, String status) {
+        Transaction tx = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Transaction not found: " + id));
+        tx.setStatus(status);
+        repository.save(tx);
+        log.info("Transaction {} status updated to {}", id, status);
+    }
+
     public List<Transaction> getByAccount(String accountId) {
         return repository.findByAccountIdOrderByTimestampDesc(accountId);
     }
