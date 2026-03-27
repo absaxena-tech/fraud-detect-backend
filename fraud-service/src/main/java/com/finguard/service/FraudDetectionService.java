@@ -98,9 +98,14 @@ public class FraudDetectionService {
         // Step 6: Create explanation
         String explanation = "Fraud detected based on rules: " + ruleResult.allRules();
         try {
+            RagExplanationRequest request = RagExplanationRequest.builder()
+                    .transaction(tx)
+                    .ruleExplanation(explanation) // 👈 pass rule output
+                    .build();
+
             RagExplanationResponse rag = ragWebClient.post()
                     .uri("/api/rag/explain")
-                    .bodyValue(tx)
+                    .bodyValue(request)
                     .retrieve()
                     .bodyToMono(RagExplanationResponse.class)
                     .block();
@@ -119,7 +124,8 @@ public class FraudDetectionService {
             FraudAlert alert = FraudAlert.builder()
                     .transactionId(tx.getId())
                     .fraudScore(enrichedScore)
-                    .ruleTriggered(ruleResult.primaryRule())
+                    .primaryRule(ruleResult.primaryRule())
+                    .rulesTriggered(ruleResult.allRules())
                     .explanation(explanation)
                     .status(status)
                     .build();
@@ -135,7 +141,8 @@ public class FraudDetectionService {
                     .userEmail(tx.getUserEmail())
                     .amount(tx.getAmount())
                     .fraudScore(enrichedScore)
-                    .ruleTriggered(ruleResult.primaryRule())
+                    .primaryRule(ruleResult.primaryRule())
+                    .rulesTriggered(ruleResult.allRules())
                     .explanation(explanation)
                     .status(status)
                     .detectedAt(Instant.now())
@@ -185,15 +192,32 @@ public class FraudDetectionService {
     }
 
     // Query methods
+
     public List<FraudAlert> getOpenAlerts() {
-        return alertRepository.findByStatusOrderByCreatedAtDesc("FLAGGED");
+        List<FraudAlert> alerts =
+                alertRepository.findByStatusInOrderByCreatedAtDesc(
+                        List.of("FLAGGED", "BLOCKED")
+                );
+        initializeRules(alerts);
+        return alerts;
     }
 
     public List<FraudAlert> getAlertsByTransaction(UUID transactionId) {
-        return alertRepository.findByTransactionId(transactionId);
+        List<FraudAlert> alerts = alertRepository.findByTransactionId(transactionId);
+        initializeRules(alerts);
+        return alerts;
     }
 
     public List<FraudAlert> getAlertsByUserId(String userId) {
-        return alertRepository.findByUserId(userId);
+        List<FraudAlert> alerts = alertRepository.findByUserId(userId);
+        initializeRules(alerts);
+        return alerts;
+    }
+    private void initializeRules(List<FraudAlert> alerts) {
+        alerts.forEach(a -> {
+            if (a.getRulesTriggered() != null) {
+                a.getRulesTriggered().size(); // force lazy load
+            }
+        });
     }
 }

@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -21,8 +22,13 @@ public class FraudAlert {
     @Column(name = "fraud_score", nullable = false)
     private double fraudScore;
 
-    @Column(name = "rule_triggered")
-    private String ruleTriggered;
+    @Column(name = "primary_rule")
+    private String primaryRule;
+
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "fraud_alert_rules", joinColumns = @JoinColumn(name = "alert_id"))
+    @Column(name = "rule")
+    private List<String> rulesTriggered;
 
     @Column(columnDefinition = "TEXT")
     private String explanation;

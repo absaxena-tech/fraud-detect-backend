@@ -16,7 +16,6 @@ public class FraudController {
 
     private final FraudDetectionService service;
 
-    /** Get fraud alerts for the authenticated user's transactions */
     @GetMapping("/alerts/my")
     public ResponseEntity<List<FraudAlert>> getMyAlerts(
             @RequestHeader("X-User-Id") String userId) {
@@ -29,8 +28,7 @@ public class FraudController {
         return ResponseEntity.ok(service.getAlertsByTransaction(transactionId));
     }
 
-    /** Admin: all open alerts */
-    @GetMapping("/alerts")
+    @GetMapping("/alerts/open")
     public ResponseEntity<List<FraudAlert>> getAllOpenAlerts() {
         return ResponseEntity.ok(service.getOpenAlerts());
     }

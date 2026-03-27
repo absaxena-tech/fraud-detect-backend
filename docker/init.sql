@@ -31,11 +31,16 @@ CREATE TABLE IF NOT EXISTS fraud_alerts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     transaction_id UUID REFERENCES transactions(id),
     fraud_score DOUBLE PRECISION NOT NULL,
-    rule_triggered VARCHAR(255),
+    primary_rule VARCHAR(255),
     explanation TEXT,
     status VARCHAR(32) DEFAULT 'OPEN',
     created_at TIMESTAMPTZ DEFAULT NOW()
-    );
+);
+
+CREATE TABLE IF NOT EXISTS fraud_alert_rules (
+    alert_id UUID REFERENCES fraud_alerts(id) ON DELETE CASCADE,
+    rule VARCHAR(255) NOT NULL
+);
 
 CREATE TABLE IF NOT EXISTS risk_profiles (
     account_id VARCHAR(64) PRIMARY KEY,

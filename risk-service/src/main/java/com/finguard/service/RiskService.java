@@ -35,10 +35,20 @@ public class RiskService {
         RiskProfile profile = profileRepository.findById(accountId)
                 .orElse(RiskProfile.builder()
                         .accountId(accountId)
-                        .riskScore(0.1)
+                        .riskScore(0.0)
                         .transactionCount(0)
                         .avgAmount(BigDecimal.ZERO)
                         .build());
+
+        if (profile.getTransactionCount() == 0) {
+            return RiskResponse.builder()
+                    .accountId(accountId)
+                    .riskScore(0.0)
+                    .riskLevel("LOW")
+                    .reason("No transactions yet")
+                    .build();
+        }
+
 
         double score = computeScore(profile);
         String level = toLevel(score);
@@ -58,7 +68,7 @@ public class RiskService {
         RiskProfile profile = profileRepository.findById(accountId)
                 .orElse(RiskProfile.builder()
                         .accountId(accountId)
-                        .riskScore(0.1)
+                        .riskScore(0.0)
                         .transactionCount(0)
                         .avgAmount(BigDecimal.ZERO)
                         .build());
@@ -105,7 +115,7 @@ public class RiskService {
 
     private RiskResponse parseCache(String accountId, String cached) {
         String[] parts = cached.split(":");
-        double score = parts.length > 0 ? Double.parseDouble(parts[0]) : 0.1;
+        double score = parts.length > 0 ? Double.parseDouble(parts[0]) : 0.0;
         String level = parts.length > 1 ? parts[1] : "LOW";
         return RiskResponse.builder()
                 .accountId(accountId)
