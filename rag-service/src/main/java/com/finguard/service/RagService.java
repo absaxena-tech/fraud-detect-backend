@@ -34,21 +34,20 @@ public class RagService {
         seedKnowledgeBase();
     }
 
-    /**
-     * Main RAG pipeline:
-     * 1. Embed the incoming transaction as a query vector
-     * 2. Retrieve top similar historical fraud cases from ChromaDB
-     * 3. Prompt GPT with transaction + retrieved context
-     * 4. Return the explanation
-     */
-    public RagExplanationResponse explain(TransactionEvent tx) {
+    public RagExplanationResponse explain(TransactionEvent tx, String ruleExplanation) {
+
         String query = buildQueryText(tx);
         log.info("RAG explain request for transaction {}", tx.getId());
+
+        // fallback safety
+        if (ruleExplanation == null || ruleExplanation.isBlank()) {
+            ruleExplanation = "No rule-based explanation available.";
+        }
 
         // Step 1: Embed the query
         Embedding queryEmbedding = embeddingModel.embed(query).content();
 
-        // Step 2: Retrieve similar fraud cases from ChromaDB
+        // Step 2: Retrieve similar fraud cases
         List<EmbeddingMatch<TextSegment>> matches =
                 embeddingStore.findRelevant(queryEmbedding, 5, 0.60);
 
@@ -62,8 +61,8 @@ public class RagService {
 
         log.info("Retrieved {} similar cases for tx {}", matches.size(), tx.getId());
 
-        // Step 3: Build prompt and call LLM
-        String prompt = buildPrompt(query, retrievedContext);
+        // Step 3: Build prompt WITH rule explanation
+        String prompt = buildPrompt(query, ruleExplanation, retrievedContext);
 
         String explanation;
         try {
@@ -78,6 +77,42 @@ public class RagService {
                 .explanation(explanation)
                 .similarCases(retrievedContext)
                 .build();
+    }
+
+    /**
+     * UPDATED PROMPT (key improvement)
+     */
+    private String buildPrompt(String transactionDetails, String ruleExplanation, String historicalContext) {
+        return """
+            You are a senior financial fraud analyst AI.
+
+            TASK:
+            Explain why the transaction may be fraudulent using rule-based signals and historical fraud patterns.
+
+            RULES:
+            - Always prioritize RULE-BASED SIGNALS as the primary reason.
+            - Use SIMILAR CASES only as supporting evidence.
+            - Do NOT invent missing data.
+            - If similar cases are weak or missing, explicitly say evidence is limited.
+            - Keep response factual, professional, and concise.
+            - Output MUST be exactly 2-3 sentences.
+
+            OUTPUT FORMAT:
+            Sentence 1: Explain fraud risk using rule-based signals.
+            Sentence 2: Support with similar historical patterns.
+            Sentence 3 (optional): Suggest action.
+
+            TRANSACTION DETAILS:
+            %s
+
+            RULE-BASED SIGNALS:
+            %s
+
+            SIMILAR HISTORICAL FRAUD CASES:
+            %s
+
+            RESPONSE:
+            """.formatted(transactionDetails, ruleExplanation, historicalContext);
     }
 
     /**
@@ -96,7 +131,6 @@ public class RagService {
 
                 while ((line = reader.readLine()) != null) {
 
-                    // skip header line
                     if (firstLine) {
                         firstLine = false;
                         continue;
@@ -107,19 +141,6 @@ public class RagService {
                     if (parts.length < 10) {
                         continue;
                     }
-
-                    // According to Python CSV format:
-                    // caseId,fraudType,channel,riskLevel,amount,currency,merchantCategory,location,timestamp,description
-                    String caseId = parts[0];
-                    String fraudType = parts[1];
-                    String channel = parts[2];
-                    String riskLevel = parts[3];
-                    String amount = parts[4];
-                    String currency = parts[5];
-                    String merchantCategory = parts[6];
-                    String location = parts[7];
-                    String timestamp = parts[8];
-                    String description = parts[9];
 
                     String caseText = """
                             CaseId: %s
@@ -132,9 +153,9 @@ public class RagService {
                             Timestamp: %s
                             Description: %s
                             """.formatted(
-                            caseId, fraudType, channel, riskLevel,
-                            amount, currency, merchantCategory,
-                            location, timestamp, description
+                            parts[0], parts[1], parts[2], parts[3],
+                            parts[4], parts[5], parts[6],
+                            parts[7], parts[8], parts[9]
                     );
 
                     ingestFraudCase(caseText);
@@ -142,6 +163,7 @@ public class RagService {
                 }
 
                 log.info("Seeded {} fraud cases into ChromaDB from fraud_cases.csv", count);
+
             }
 
         } catch (Exception e) {
@@ -149,9 +171,6 @@ public class RagService {
         }
     }
 
-    /**
-     * Ingest fraud case into ChromaDB vector store.
-     */
     public void ingestFraudCase(String caseDescription) {
         TextSegment segment = TextSegment.from(caseDescription);
         Embedding embedding = embeddingModel.embed(caseDescription).content();
@@ -172,37 +191,6 @@ public class RagService {
         );
     }
 
-    private String buildPrompt(String transactionDetails, String historicalContext) {
-        return """
-            You are a senior financial fraud analyst AI.
-
-            TASK:
-            Explain why the transaction may be fraudulent using ONLY the information provided.
-
-            RULES:
-            - Use only TRANSACTION DETAILS and SIMILAR CASES below.
-            - Do NOT assume or invent customer history, account behavior, or missing fields.
-            - If SIMILAR CASES are empty or irrelevant, say evidence is limited and recommend manual review.
-            - Keep response factual, professional, and concise.
-            - Output MUST be exactly 2-3 sentences.
-
-            OUTPUT FORMAT:
-            Sentence 1: Mention key fraud indicators from transaction details.
-            Sentence 2: Compare with similar historical fraud patterns.
-            Sentence 3 (optional): Suggest action (manual review / block / verify customer).
-
-            TRANSACTION DETAILS:
-            %s
-
-            SIMILAR HISTORICAL FRAUD CASES:
-            %s
-
-            RESPONSE:
-            """.formatted(transactionDetails, historicalContext);
-    }
-    /**
-     * CSV splitter (supports commas inside quotes)
-     */
     private String[] splitCsvLine(String line) {
         return line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
     }

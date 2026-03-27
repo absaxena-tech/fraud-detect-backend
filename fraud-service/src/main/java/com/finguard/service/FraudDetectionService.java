@@ -98,9 +98,14 @@ public class FraudDetectionService {
         // Step 6: Create explanation
         String explanation = "Fraud detected based on rules: " + ruleResult.allRules();
         try {
+            RagExplanationRequest request = RagExplanationRequest.builder()
+                    .transaction(tx)
+                    .ruleExplanation(explanation) // 👈 pass rule output
+                    .build();
+
             RagExplanationResponse rag = ragWebClient.post()
                     .uri("/api/rag/explain")
-                    .bodyValue(tx)
+                    .bodyValue(request)
                     .retrieve()
                     .bodyToMono(RagExplanationResponse.class)
                     .block();

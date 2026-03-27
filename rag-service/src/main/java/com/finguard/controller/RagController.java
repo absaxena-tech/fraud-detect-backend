@@ -1,5 +1,6 @@
 package com.finguard.controller;
 
+import com.finguard.dto.RagExplanationRequest;
 import com.finguard.dto.RagExplanationResponse;
 import com.finguard.dto.TransactionEvent;
 import com.finguard.service.RagService;
@@ -16,8 +17,10 @@ public class RagController {
 
     /** Called synchronously by Fraud Service for on-demand explanations */
     @PostMapping("/explain")
-    public ResponseEntity<RagExplanationResponse> explain(@RequestBody TransactionEvent tx) {
-        return ResponseEntity.ok(ragService.explain(tx));
+    public ResponseEntity<RagExplanationResponse> explain(@RequestBody RagExplanationRequest request) {
+        return ResponseEntity.ok(
+                ragService.explain(request.getTransaction(), request.getRuleExplanation())
+        );
     }
 
     /** Ingest a single fraud case description into the vector store */
